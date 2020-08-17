@@ -1,0 +1,129 @@
+#game{
+	position: relative;
+	background-image: url(../images/sky.png);
+	height: 600px;
+	width: 100%;
+	animation: backgroundmove 8s linear infinite;
+}
+.playing,
+.end{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	text-align: center;
+}
+.game_start{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	top: 290px;
+	font-weight: bolder;
+	width: 200px;
+	height: 60px;
+	line-height: 60px;
+	text-align: center;
+	animation: fontChange .5s infinite;
+}
+.bird{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	top: 250px;
+	background-image: url(../images/birds.png);
+	width: 30px;
+	height: 30px;
+	animation: flybird .5s steps(3) infinite;
+}
+.playing .score{
+	color: #fff;
+	font-size: 20px;
+	font-weight: bolder;
+}
+.mask{
+	position: absolute;
+	height: 600px;
+	width: 100%;
+	background-color: rgba(0,0,0,.7);
+}
+.end{
+	top: 70px;
+}
+.gameover{
+	font-size: 36px;
+	font-weight: bold;
+	color: red;
+} 
+.yourresult,
+.last_score{
+	margin-top: 20px;
+	font-size: 20px;
+	font-weight: bold;
+	color: #ff0;
+}
+.rank_list{
+	margin-top: 25px;
+	color: #09f;
+	font-size: 12px;
+}
+.rank_item{
+	margin-bottom: 25px;
+}
+.score_item_degree{
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	background-color: #09f;
+	color: #fff;
+}
+.rank_item .first{
+	background-color: #f54545;
+}
+.rank_item .second{
+	background-color: #ff8547;
+}
+.rank_item .third{
+	background-color: #ffac38;
+}
+.score_item_score{
+	display: inline-block;
+	width: 30px;
+}
+.rank_item span{
+	margin-right: 10px;
+}
+.resume{
+	font-size: 18px;
+	font-weight: bold;
+	color: #09f;
+	margin-top: 10px;
+}
+@keyframes backgroundmove{
+	0%{
+		background-position-x: 800px; 
+	}
+	100%{
+		background-position-x: 0; 
+	}
+}
+@keyframes flybird{
+		0%{
+			background-position-x: 0px;
+		}
+		50%{
+			top:210px;
+		}
+		100%{
+			background-position-x: 90px;
+		}
+}
+@keyframes fontChange{
+	0%,
+	100%{
+		color: #fff;
+		font-size: 26px;
+	}
+	50%{
+		color: #09f;
+		font-size: 36px;
+	}
+}
