@@ -22,6 +22,7 @@
 	height: 60px;
 	line-height: 60px;
 	text-align: center;
+	cursor: pointer;
 	animation: fontChange .5s infinite;
 }
 .bird{
@@ -34,19 +35,28 @@
 	height: 30px;
 	animation: flybird .5s steps(3) infinite;
 }
+.bird_2{
+	animation: flybird_2 .5s steps(3) infinite;
+}
 .playing .score{
 	color: #fff;
 	font-size: 20px;
 	font-weight: bolder;
+
+	display: none;
 }
 .mask{
 	position: absolute;
 	height: 600px;
 	width: 100%;
 	background-color: rgba(0,0,0,.7);
+
+	display: none;
 }
 .end{
 	top: 70px;
+
+	display: none;
 }
 .gameover{
 	font-size: 36px;
@@ -111,6 +121,14 @@
 		}
 		50%{
 			top:210px;
+		}
+		100%{
+			background-position-x: 90px;
+		}
+}
+@keyframes flybird_2{
+		0%{
+			background-position-x: 0px;
 		}
 		100%{
 			background-position-x: 90px;
