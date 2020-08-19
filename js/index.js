@@ -1,54 +1,271 @@
 var bird = {
-	skyDuration: 5,
-	birdTop: 250,
-	birdStepY:0,
-	maxTop: 570,
-	minTop: 0,
-	init: function () {
-		this.initData();
-		this.handleStart();
-	},
-	initData: function () {
-		this.game = document.getElementById('game');
-		this.oStart = document.getElementsByClassName('game_start')[0];
-		this.oBird = document.getElementsByClassName('bird')[0]; 
-		this.oScore = document.getElementsByClassName('score')[0];
-	},
-	handleStart: function () {
-		this.oStart.onclick = () => {
-			this.oStart.style.display = 'none';
-			this.oScore.style.display = 'block';
-			this.game.style.animationDuration = this.skyDuration +'s';
+  skyPosition: 0,
+  skyStep: 2,
+  birdTop: 235,
+  startColor: 'blue',
+  startFlag: false,
+  birdStepY: 0,
+  minTop: 0,
+  maxTop: 570,
+  pipeLength: 7,
+  pipeArr: [],
+  pipeLastIndex: 6,
+  score: 0,
+  scoreArr: [],
+  init: function () {
+    this.initData();
+    this.animate();
 
-			this.oBird.style.left = 80 + 'px';
-			this.oBird.classList.add('bird_2');
-			this.timer = setInterval(() => {
-				this.birdDrop();
-			},30)
-			this.handleClick();
-		} 
-	},
-	handleClick: function () {
-		this.game.onclick = (e) => {
-			if(e.target == this.game){
-				this.birdStepY = -10;
-			}
-		}
-	},
-	birdDrop: function() {
-		this.birdTop += ++this.birdStepY;
-		this.oBird.style.top = this.birdTop + 'px';
-		this.judgeKnock();
-	},
-	judgeKnock: function() {
-		if(this.birdTop >= this.maxTop || this.birdTop <= this.minTop){
-			this.gameOver();
-		}
-	},
-	gameOver: function () {
-		clearInterval(this.timer);
-		this.oBird.style.animationPlayState = 'paused';
-		// console.log('over');
-	}
-}
+    this.handleStart();
+    this.handleClick();
+    this.handleReStart();
+
+    if(sessionStorage.getItem('play')) {
+      this.start();
+    }
+  },
+  initData: function () {
+    this.el = document.getElementById('game');
+    this.oBird = this.el.getElementsByClassName('bird')[0];
+    this.oStart = this.el.getElementsByClassName('start')[0];
+    this.oScore = this.el.getElementsByClassName('score')[0];
+    this.oMask = this.el.getElementsByClassName('mask')[0];
+    this.oEnd = this.el.getElementsByClassName('end')[0];
+    this.oFinalScore = this.el.getElementsByClassName('final-score')[0];
+    this.oRankList = this.el.getElementsByClassName('rank-list')[0];
+    this.oRestart = this.el.getElementsByClassName('restart')[0];
+
+
+    this.scoreArr = this.getScore();
+  },
+  getScore: function () {
+    var scoreArr = getLocal('score');
+    return scoreArr ? scoreArr : [];
+  },
+  animate: function () {
+    var count = 0;
+    var self = this;
+
+    this.timer = setInterval(function () {
+      self.skyMove();
+
+      if(self.startFlag) {
+        self.birdDrop();
+        self.pipeMove();
+      }
+
+      if(++ count % 10 === 0) {
+        if(!self.startFlag) {
+          self.startBound();
+          self.birdJump();
+        }
+
+        self.birdFly(count);
+      }
+
+    }, 30)
+
+  },
+  skyMove: function () {
+    this.skyPosition -= this.skyStep;
+    this.el.style.backgroundPositionX = this.skyPosition + 'px';
+  },
+  birdJump: function () {
+    this.birdTop = this.birdTop === 220 ? 260 : 220;
+    this.oBird.style.top = this.birdTop + 'px';
+  },
+  birdFly: function (count) {
+    this.oBird.style.backgroundPositionX = count % 3 * -30 + 'px';
+  },
+  birdDrop: function () {
+    this.birdTop += ++ this.birdStepY;
+    this.oBird.style.top = this.birdTop + 'px';
+
+    this.judgeKnock();
+    this.addScore();
+  },
+  addScore: function () {
+    var index = this.score % this.pipeLength;
+    var pipeX = this.pipeArr[index].up.offsetLeft;
+
+    if(pipeX < 13) {
+      this.oScore.innerText = ++ this.score;
+    }
+  },
+  judgeKnock: function () {
+    this.judgeBoundary();
+    this.judgePipe();
+  },
+  judgeBoundary: function () {
+    if(this.birdTop <= this.minTop || this.birdTop >= this.maxTop) {
+      this.failGame();
+    }
+  },
+  judgePipe: function () {
+    var index = this.score % this.pipeLength;
+    var pipeX = this.pipeArr[index].up.offsetLeft;
+    var pipeY = this.pipeArr[index].y; // []
+    var birdY = this.birdTop;
+
+    if((pipeX <= 95 && pipeX >= 13) && (birdY <= pipeY[0] || birdY >= pipeY[1])) {
+      this.failGame();
+    }
+  },
+  createPipe: function (x) {
+    var upHeight = 50 + Math.floor(Math.random() * 175);
+    var downHeight = 450 - upHeight;
+
+    var oUpPipe = createEle('div', ['pipe', 'pipe-up'], {
+      height: upHeight + 'px',
+      left: x + 'px',
+    });
+    var oDownPipe = createEle('div', ['pipe', 'pipe-down'], {
+      height: downHeight + 'px',
+      left: x + 'px',
+    });
+
+    this.el.appendChild(oUpPipe);
+    this.el.appendChild(oDownPipe);
+
+    this.pipeArr.push({
+      up: oUpPipe,
+      down: oDownPipe,
+      y: [upHeight, upHeight + 150 - 30],
+    })
+  },
+  pipeMove: function () {
+    for(var i = 0; i < this.pipeLength; i ++) {
+      var oUpPipe = this.pipeArr[i].up;
+      var oDownPipe = this.pipeArr[i].down;
+      var x = oUpPipe.offsetLeft - this.skyStep;
+
+      console.log(x);
+
+      if(x < -52) {
+      console.log(x);
+        console.log('xiao');
+        var lastPipeLeft = this.pipeArr[this.pipeLastIndex].up.offsetLeft;
+        oUpPipe.style.left = lastPipeLeft + 300 + 'px';
+        oDownPipe.style.left = lastPipeLeft + 300 + 'px';
+
+        this.pipeLastIndex = i;
+
+        continue;
+      }
+
+      oUpPipe.style.left = x + 'px';
+      oDownPipe.style.left = x + 'px';
+
+    }
+  },
+  startBound: function () {
+    var prevColor = this.startColor;
+    this.startColor = this.startColor === 'blue' ? 'white' : 'blue';
+
+    this.oStart.classList.remove('start-' + prevColor);
+    this.oStart.classList.add('start-' + this.startColor);
+  },
+  handleStart: function () {
+    var self = this;
+    this.oStart.onclick = this.start.bind(this);
+  },
+  start: function () {
+    var self = this;
+    self.startFlag = true;
+    self.oStart.style.display = 'none';
+    self.oScore.style.display = 'block';
+    self.oBird.style.left = '80px';
+    self.oBird.style.transition = 'none';
+    self.skyStep = 5;
+
+    for(var i = 0; i < self.pipeLength; i ++) {
+      self.createPipe(300 *(i + 1));
+    }
+  },
+  handleClick: function () {
+    var self = this;
+    this.el.onclick = function (e) {
+      var dom = e.target;
+      var isStart = dom.classList.contains('start');
+
+      if(!isStart) {
+        self.birdStepY = -10;
+      }
+
+    };
+  },
+  handleReStart: function () {
+    this.oRestart.onclick = function () {
+      sessionStorage.setItem('play', true);
+      window.location.reload();
+    };
+  },
+  failGame: function () {
+    clearInterval(this.timer);
+    this.setScore();
+
+    this.oMask.style.display = 'block';
+    this.oEnd.style.display = 'block';
+    this.oBird.style.display = 'none';
+    this.oScore.style.display = 'none';
+    this.oFinalScore.innerText = this.score;
+
+    this.renderRankList();
+  },
+  setScore: function () {
+    this.scoreArr.push({
+      score: this.score,
+      time: this.getDate()
+    })
+
+    this.scoreArr.sort(function (a, b) {
+      return b.score - a.score;
+    })
+
+    var scoreLength = this.scoreArr.length;
+    this.scoreArr.length = scoreLength > 8 ? 8 : scoreLength;
+
+    setLocal('score', this.scoreArr);
+  },
+  getDate: function () {
+    var d = new Date();
+    var year = d.getFullYear();
+    var month = d.getMonth() + 1;
+    var day = d.getDate();
+    var hour = d.getHours();
+    var minute = d.getMinutes();
+    var second = d.getSeconds();
+
+    return `${year}.${month}.${day} ${hour}:${minute}:${second}`;
+  },
+  renderRankList: function () {
+    var template = '';
+
+    for(var i = 0; i < this.scoreArr.length; i ++) {
+      var scoreObj = this.scoreArr[i];
+      var degreeClass = '';
+      switch (i) {
+        case 0:
+          degreeClass = 'first';
+          break;
+        case 1:
+          degreeClass = 'second';
+          break;
+        case 2:
+          degreeClass = 'third';
+          break;
+      }
+      template += `
+        <li class="rank-item">
+          <span class="rank-degree ${degreeClass}">${i + 1}</span>
+          <span class="rank-score">${scoreObj.score}</span>
+          <span class="rank-time">${scoreObj.time}</span>
+        </li>
+      `;
+    }
+
+    this.oRankList.innerHTML = template;
+  },
+};
+
 bird.init();
