@@ -1,271 +1,220 @@
 var bird = {
-  skyPosition: 0,
-  skyStep: 2,
-  birdTop: 235,
-  startColor: 'blue',
-  startFlag: false,
-  birdStepY: 0,
-  minTop: 0,
-  maxTop: 570,
-  pipeLength: 7,
-  pipeArr: [],
-  pipeLastIndex: 6,
-  score: 0,
-  scoreArr: [],
-  init: function () {
-    this.initData();
-    this.animate();
+	skyDuration: 5,
+	pipeStep:0,  //pipe每50ms移动的距离
+	birdTop: 250,
+	birdStepY:0,
+	maxTop: 570,
+	minTop: 0,
+	pipeGap: 150,  //上下柱子间隙
+	randomRange: 150, //柱子高度随机范围
+	pipeLength: 6,
+	pipeArr: [],
+	firstIndex: 0,
+	scoreList: [],
+	init: function () {
+		this.initData();
+		this.handleStart();
+	},
+	initData: function () {
+		this.game = document.getElementById('game');
+		this.oStart = document.getElementsByClassName('game_start')[0];
+		this.playing = document.getElementsByClassName('playing')[0];
+		this.oBird = document.getElementsByClassName('bird')[0]; 
+		this.oScore = document.getElementsByClassName('score')[0];
+		this.end = document.getElementsByClassName('end')[0];
+		this.mask = document.getElementsByClassName('mask')[0];
+		this.finalScore = document.getElementsByClassName('finalScore')[0];
+		this.rankList = document.getElementsByClassName('rank_list')[0];
+		this.degree = document.getElementsByClassName('score_item_degree');
+		this.resume = document.getElementsByClassName('resume')[0];
+		// console.log(this.resume);
 
-    this.handleStart();
-    this.handleClick();
-    this.handleReStart();
+        this.pipeStep = (800/this.skyDuration)/(1000/50);//8
+	},
+	handleStart: function () {
+		this.oStart.onclick = () => {
+			this.oStart.style.display = 'none';
+			this.playing.style.display = 'block';
+			this.game.style.animationDuration = this.skyDuration +'s';
 
-    if(sessionStorage.getItem('play')) {
-      this.start();
-    }
-  },
-  initData: function () {
-    this.el = document.getElementById('game');
-    this.oBird = this.el.getElementsByClassName('bird')[0];
-    this.oStart = this.el.getElementsByClassName('start')[0];
-    this.oScore = this.el.getElementsByClassName('score')[0];
-    this.oMask = this.el.getElementsByClassName('mask')[0];
-    this.oEnd = this.el.getElementsByClassName('end')[0];
-    this.oFinalScore = this.el.getElementsByClassName('final-score')[0];
-    this.oRankList = this.el.getElementsByClassName('rank-list')[0];
-    this.oRestart = this.el.getElementsByClassName('restart')[0];
+			this.oBird.style.left = 80 + 'px';
+			this.oBird.classList.add('bird_2');
+			this.timer = setInterval(() => {
+				this.birdDrop();
+				this.pipeMove();
+			},50)
+			this.handleClick();
+			this.createPipe();
+		};
+		//跳过开始界面
+		if(localStorage.getItem('flag') == 'true'){
+			this.oStart.onclick();
+		}
+		localStorage.setItem('flag', false);
+	},
+	handleClick: function () {
+		this.game.onclick = (e) => {
+			if(e.target == this.game){
+				this.birdStepY = -10;
+			}
+		}
+	},
+	birdDrop: function() {
+		this.birdTop += ++this.birdStepY;
+		this.oBird.style.top = this.birdTop + 'px';
+		this.judgeKnock();
+	},
+	judgeKnock: function() {
+		var pipeLeft = this.pipeArr[this.firstIndex].up.offsetLeft;
+		var pipeTop = parseInt(this.pipeArr[this.firstIndex].up.style.height);
+		var birdTop = parseInt(this.oBird.style.top);
 
+		if(this.birdTop >= this.maxTop || this.birdTop <= this.minTop){
+			this.gameOver();
 
-    this.scoreArr = this.getScore();
-  },
-  getScore: function () {
-    var scoreArr = getLocal('score');
-    return scoreArr ? scoreArr : [];
-  },
-  animate: function () {
-    var count = 0;
-    var self = this;
+		}else if(pipeLeft >= 28 && pipeLeft <= 110){
+			if(birdTop <= pipeTop || birdTop - pipeTop >= (this.pipeGap - 30)){
+				this.gameOver();
+			}
+		}else if(pipeLeft <= 27 && pipeLeft > (27 - this.pipeStep)){
+				this.oScore.innerText ++;
+		}
+	},
+	createPipe: function () {
+		var frag = document.createDocumentFragment();
+		for(var i = 0;i < this.pipeLength;i ++){
+			var upPipe = document.createElement('div');
+			var downPipe = document.createElement('div');
 
-    this.timer = setInterval(function () {
-      self.skyMove();
+			var left = 200 + 250 * i;
+			this.randomHeight(upPipe,downPipe);
 
-      if(self.startFlag) {
-        self.birdDrop();
-        self.pipeMove();
-      }
+			upPipe.classList.add('pipe','pipeTop');
+			downPipe.classList.add('pipe','pipeBottom');
+			upPipe.style.left = downPipe.style.left = left + 'px';
 
-      if(++ count % 10 === 0) {
-        if(!self.startFlag) {
-          self.startBound();
-          self.birdJump();
-        }
+			frag.appendChild(upPipe);
+			frag.appendChild(downPipe);
 
-        self.birdFly(count);
-      }
+			this.pipeArr.push({
+				up: upPipe,
+				down: downPipe
+			})
+		}
+		this.playing.appendChild(frag);
+	},
+	pipeMove: function () {
+		for(var i = 0;i < this.pipeLength;i ++){
+	        var oUpPipe = this.pipeArr[i].up;
+	        var oDownPipe = this.pipeArr[i].down;
+	        var x = oUpPipe.offsetLeft - this.pipeStep;
 
-    }, 30)
+			oUpPipe.style.left = oDownPipe.style.left = x + 'px';
+		}
+		var firstPipe = this.pipeArr[this.firstIndex];
+		if(firstPipe.up.offsetLeft < -52){
+			// console.log('copy');
 
-  },
-  skyMove: function () {
-    this.skyPosition -= this.skyStep;
-    this.el.style.backgroundPositionX = this.skyPosition + 'px';
-  },
-  birdJump: function () {
-    this.birdTop = this.birdTop === 220 ? 260 : 220;
-    this.oBird.style.top = this.birdTop + 'px';
-  },
-  birdFly: function (count) {
-    this.oBird.style.backgroundPositionX = count % 3 * -30 + 'px';
-  },
-  birdDrop: function () {
-    this.birdTop += ++ this.birdStepY;
-    this.oBird.style.top = this.birdTop + 'px';
+			this.randomHeight(firstPipe.up,firstPipe.down);
 
-    this.judgeKnock();
-    this.addScore();
-  },
-  addScore: function () {
-    var index = this.score % this.pipeLength;
-    var pipeX = this.pipeArr[index].up.offsetLeft;
+			// var upHeight = Math.floor(Math.random()*100) + 150;
+			// firstPipe.up.style.height = upHeight + 'px';
+			// firstPipe.down.style.height = (450 - upHeight) + 'px';
 
-    if(pipeX < 13) {
-      this.oScore.innerText = ++ this.score;
-    }
-  },
-  judgeKnock: function () {
-    this.judgeBoundary();
-    this.judgePipe();
-  },
-  judgeBoundary: function () {
-    if(this.birdTop <= this.minTop || this.birdTop >= this.maxTop) {
-      this.failGame();
-    }
-  },
-  judgePipe: function () {
-    var index = this.score % this.pipeLength;
-    var pipeX = this.pipeArr[index].up.offsetLeft;
-    var pipeY = this.pipeArr[index].y; // []
-    var birdY = this.birdTop;
+			firstPipe.up.style.left = firstPipe.down.style.left = firstPipe.up.offsetLeft + 1500 +'px';
+			// console.log(firstPipe.up.style.left);
+			this.firstIndex = (++ this.firstIndex) % 6;
+		}
+	},
+	randomHeight:function (pipe1,pipe2) {
+		var upHeight = Math.floor(Math.random()*this.randomRange) + 150;
+		pipe1.style.height = upHeight + 'px';
+		pipe2.style.height = (600 - this.pipeGap - upHeight) + 'px';
+	},
+	gameOver: function () {
+		this.oScore.style.display = 'none';
+		this.end.style.display = 'block';
+		this.mask.style.display = 'block';
+		clearInterval(this.timer);
+		this.oBird.style.animationPlayState = 'paused';
+		this.game.style.animationPlayState = 'paused';
+		this.finalScore.innerText = this.oScore.innerText;
+		this.setStorage();
+		this.getList();
+		this.reStart();
+	},
+	getTime: function () {
+		var d = new Date();
+		var year = d.getFullYear();
+		var month = d.getMonth() + 1;
+		month = month < 10 ? '0' + month : month;
+		var date = d.getDate();
+		date = date < 10 ? '0' + date : date;
+		var h = d.getHours();
+		h = h < 10 ? '0' + h : h;
+		var m = d.getMinutes();
+		m = m < 10 ? '0' + m : m;
+		var s = d.getSeconds();
+		s = s < 10 ? '0' + s : s;
 
-    if((pipeX <= 95 && pipeX >= 13) && (birdY <= pipeY[0] || birdY >= pipeY[1])) {
-      this.failGame();
-    }
-  },
-  createPipe: function (x) {
-    var upHeight = 50 + Math.floor(Math.random() * 175);
-    var downHeight = 450 - upHeight;
+		var template = `${year}.${month}.${date} ${h}:${m}:${s}`;
+		return template;
 
-    var oUpPipe = createEle('div', ['pipe', 'pipe-up'], {
-      height: upHeight + 'px',
-      left: x + 'px',
-    });
-    var oDownPipe = createEle('div', ['pipe', 'pipe-down'], {
-      height: downHeight + 'px',
-      left: x + 'px',
-    });
+	},
+	setStorage: function () {
+		var local = localStorage.getItem('score');
+		this.scoreList = local ? JSON.parse(local) : [];
 
-    this.el.appendChild(oUpPipe);
-    this.el.appendChild(oDownPipe);
+		this.scoreList.push({
+			score: this.oScore.innerText,
+			time: this.getTime(),
+		})
+		// console.log(this.scoreList);
 
-    this.pipeArr.push({
-      up: oUpPipe,
-      down: oDownPipe,
-      y: [upHeight, upHeight + 150 - 30],
-    })
-  },
-  pipeMove: function () {
-    for(var i = 0; i < this.pipeLength; i ++) {
-      var oUpPipe = this.pipeArr[i].up;
-      var oDownPipe = this.pipeArr[i].down;
-      var x = oUpPipe.offsetLeft - this.skyStep;
+		localStorage.setItem('score', JSON.stringify(this.scoreList));
+	},
+	getList: function() {
+		this.scoreList = JSON.parse(localStorage.getItem('score'));
+		// 使用sort比较器函数使列表按照score降序排列
+		this.scoreList.sort(function(a,b){
+			return b.score - a.score;
+		})
+		// console.log(this.scoreList);
 
-      console.log(x);
+		var template = ``;
+		var len = this.scoreList.length > 8 ? 8 : this.scoreList.length;
+		for(var i = 0;i < len;i ++){
+			template += `
+				<li class="rank_item">
+					<span class="score_item_degree">${i + 1}</span>
+					<span class="score_item_score">${this.scoreList[i].score}</span>
+					<span class="score_item_time">${this.scoreList[i].time}</span>
+				</li>
+			`;
+		}
+		this.rankList.innerHTML = template;
 
-      if(x < -52) {
-      console.log(x);
-        console.log('xiao');
-        var lastPipeLeft = this.pipeArr[this.pipeLastIndex].up.offsetLeft;
-        oUpPipe.style.left = lastPipeLeft + 300 + 'px';
-        oDownPipe.style.left = lastPipeLeft + 300 + 'px';
-
-        this.pipeLastIndex = i;
-
-        continue;
-      }
-
-      oUpPipe.style.left = x + 'px';
-      oDownPipe.style.left = x + 'px';
-
-    }
-  },
-  startBound: function () {
-    var prevColor = this.startColor;
-    this.startColor = this.startColor === 'blue' ? 'white' : 'blue';
-
-    this.oStart.classList.remove('start-' + prevColor);
-    this.oStart.classList.add('start-' + this.startColor);
-  },
-  handleStart: function () {
-    var self = this;
-    this.oStart.onclick = this.start.bind(this);
-  },
-  start: function () {
-    var self = this;
-    self.startFlag = true;
-    self.oStart.style.display = 'none';
-    self.oScore.style.display = 'block';
-    self.oBird.style.left = '80px';
-    self.oBird.style.transition = 'none';
-    self.skyStep = 5;
-
-    for(var i = 0; i < self.pipeLength; i ++) {
-      self.createPipe(300 *(i + 1));
-    }
-  },
-  handleClick: function () {
-    var self = this;
-    this.el.onclick = function (e) {
-      var dom = e.target;
-      var isStart = dom.classList.contains('start');
-
-      if(!isStart) {
-        self.birdStepY = -10;
-      }
-
-    };
-  },
-  handleReStart: function () {
-    this.oRestart.onclick = function () {
-      sessionStorage.setItem('play', true);
-      window.location.reload();
-    };
-  },
-  failGame: function () {
-    clearInterval(this.timer);
-    this.setScore();
-
-    this.oMask.style.display = 'block';
-    this.oEnd.style.display = 'block';
-    this.oBird.style.display = 'none';
-    this.oScore.style.display = 'none';
-    this.oFinalScore.innerText = this.score;
-
-    this.renderRankList();
-  },
-  setScore: function () {
-    this.scoreArr.push({
-      score: this.score,
-      time: this.getDate()
-    })
-
-    this.scoreArr.sort(function (a, b) {
-      return b.score - a.score;
-    })
-
-    var scoreLength = this.scoreArr.length;
-    this.scoreArr.length = scoreLength > 8 ? 8 : scoreLength;
-
-    setLocal('score', this.scoreArr);
-  },
-  getDate: function () {
-    var d = new Date();
-    var year = d.getFullYear();
-    var month = d.getMonth() + 1;
-    var day = d.getDate();
-    var hour = d.getHours();
-    var minute = d.getMinutes();
-    var second = d.getSeconds();
-
-    return `${year}.${month}.${day} ${hour}:${minute}:${second}`;
-  },
-  renderRankList: function () {
-    var template = '';
-
-    for(var i = 0; i < this.scoreArr.length; i ++) {
-      var scoreObj = this.scoreArr[i];
-      var degreeClass = '';
-      switch (i) {
-        case 0:
-          degreeClass = 'first';
-          break;
-        case 1:
-          degreeClass = 'second';
-          break;
-        case 2:
-          degreeClass = 'third';
-          break;
-      }
-      template += `
-        <li class="rank-item">
-          <span class="rank-degree ${degreeClass}">${i + 1}</span>
-          <span class="rank-score">${scoreObj.score}</span>
-          <span class="rank-time">${scoreObj.time}</span>
-        </li>
-      `;
-    }
-
-    this.oRankList.innerHTML = template;
-  },
-};
-
+		// 为前三添加样式
+		for(var i = 0;i < 3;i ++){
+			switch (this.degree[i].innerText) {
+				case '1':
+					this.degree[i].classList.add('first');
+					break;
+				case '2':
+					this.degree[i].classList.add('second');
+					break;
+				case '3':
+					this.degree[i].classList.add('third');
+					break;
+			}
+		}
+	},
+	reStart: function() {
+		this.resume.onclick = function() {
+		// flag用于识别玩家是否通过 点击重新开始 进入游戏，是则跳过开始界面
+			localStorage.setItem('flag', true);
+			window.location.reload();
+		}
+	}
+}
 bird.init();

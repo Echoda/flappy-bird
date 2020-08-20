@@ -1,163 +1,173 @@
-#game {
-  position: relative;
-  width: 100%;
-  height: 600px;
-  background-image: url('../images/sky.png');
-  background-position-x: 0;
-
-  overflow: hidden;
+#game{
+	position: relative;
+	background-image: url(../images/sky.png);
+	height: 600px;
+	width: 100%;
+	animation: backgroundmove 8s linear infinite;
+	overflow: hidden;
 }
-
-.bird {
-  position: absolute;
-  left: 50%;
-  top: 235px;
-  width: 30px;
-  height: 30px;
-  margin-left: -15px;
-  background-image: url('../images/birds.png');
-  transition: top .3s linear;
-  background-position-x: 0px;
+.game_start{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	top: 290px;
+	font-weight: bolder;
+	width: 200px;
+	height: 60px;
+	line-height: 60px;
+	text-align: center;
+	cursor: pointer;
+	animation: fontChange .5s infinite;
 }
-
-.start {
-  position: absolute;
-  top: 295px;
-  left: 50%;
-  margin-left: -100px;
-
-  width: 200px;
-  height: 60px;
-  line-height: 60px;
-  text-align: center;
-  font-weight: bolder;
-
-  transition: all .3s linear;
+.bird{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	top: 250px;
+	background-image: url(../images/birds.png);
+	width: 30px;
+	height: 30px;
+	animation: flybird .5s steps(3) infinite;
 }
-
-.start.start-white {
-  color: #fff;
-  font-size: 24px;
+.bird_2{
+	animation: flybird_2 .5s steps(3) infinite;
 }
-
-.start.start-blue {
-  color: #09f;
-  font-size: 36px;
+.playing{
+	display: none;
 }
-
-.score {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-
-  font-size: 20px;
-  font-weight: bolder;
-  color: #fff;
-
-  display: none;
-  z-index: 2;
+.score{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	text-align: center;
+	color: #fff;
+	font-size: 20px;
+	font-weight: bolder;
+	z-index: 2;
 }
-
-.mask {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-
-  opacity: .7;
-  background-color: #000;
-
-  display: none;
-  z-index: 2;
+.pipe{
+	position: absolute;
+	width: 52px;
 }
-
-.end {
-  position: absolute;
-  top: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-
-  text-align: center;
-
-  display: none;
-  z-index: 3;
+.pipeTop{
+	top: 0;
+	background-image: url(../images/pipe2.png);
+	background-position-y: bottom; 
 }
-
-
-.end .over {
-  font-size: 36px;
-  font-weight: bolder;
-  color: red;
+.pipeBottom{
+	bottom: 0;
+	background-image: url(../images/pipe1.png);
 }
-
-.end .result,
-.end .final-score {
-  margin-top: 20px;
-  color: #ff0;
-  font-size: 20px;
-  font-weight: bold;
+.mask{
+	position: absolute;
+	height: 600px;
+	width: 100%;
+	background-color: rgba(0,0,0,.7);
+	display: none;
+	z-index: 5;
 }
-
-.end .rank-list {
-  margin-top: 20px;
-  color: #09f;
-
+.end{
+	position: absolute;
+	left: 50%;
+	top: 70px;
+	transform: translateX(-50%);
+	text-align: center;
+	display: none;
+	z-index: 6;
 }
-
-.end .rank-item {
-  height: 30px;
-  line-height: 30px;
-  margin-bottom: 10px;
-  font-size: 12px;
+.gameover{
+	font-size: 36px;
+	font-weight: bold;
+	color: red;
+} 
+.yourresult,
+.finalScore{
+	margin-top: 20px;
+	font-size: 20px;
+	font-weight: bold;
+	color: #ff0;
 }
-
-.end .rank-degree {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 10px;
-  line-height: 14px;
-  color: #fff;
-  background-color: #8eb9f5;
+.rank_list{
+	margin-top: 25px;
+	color: #09f;
+	font-size: 12px;
 }
-
-.end .rank-degree.first {
-  background-color: #f54545;
+.rank_item{
+	margin-bottom: 25px;
 }
-
-.end .rank-degree.second {
-  background-color: #ff8547;
+.score_item_degree{
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	background-color: #09f;
+	color: #fff;
 }
-
-.end .rank-degree.third {
-  background-color: #ffac38;
+.rank_item .first{
+	background-color: #f54545;
 }
-
-.end .rank-score {
-  display: inline-block;
-  width: 30px;
+.rank_item .second{
+	background-color: #ff8547;
 }
-
-.end .restart {
-  color: #09f;
-  font-size: 18px;
-  font-weight: bolder;
-  cursor: pointer;
+.rank_item .third{
+	background-color: #ffac38;
 }
-
-.pipe {
-  position: absolute;
-  width: 52px;
+.score_item_score{
+	display: inline-block;
+	width: 30px;
 }
-
-.pipe.pipe-up {
-  top: 0;
-  background-image: url('../images/pipe2.png');
-  background-position-y: bottom;
+.rank_item span{
+	margin-right: 10px;
 }
-
-.pipe.pipe-down {
-  bottom: 0;
-  background-image: url('../images/pipe1.png');
+.resume{
+	font-size: 18px;
+	font-weight: bold;
+	color: #09f;
+	margin-top: 10px;
+	cursor: pointer;
+}
+@keyframes backgroundmove{
+	0%{
+		background-position-x: 800px; 
+	}
+	100%{
+		background-position-x: 0; 
+	}
+}
+@keyframes flybird{
+		0%{
+			background-position-x: 0px;
+		}
+		50%{
+			top:210px;
+		}
+		100%{
+			background-position-x: 90px;
+		}
+}
+@keyframes flybird_2{
+		0%{
+			background-position-x: 0px;
+		}
+		100%{
+			background-position-x: 90px;
+		}
+}
+@keyframes fontChange{
+	0%,
+	100%{
+		color: #fff;
+		font-size: 26px;
+	}
+	50%{
+		color: #09f;
+		font-size: 36px;
+	}
+}
+@keyframes pipemove{
+	0%{
+		transform: translateX(0);
+	}
+	100%{
+		transform: translateX(-1600px);
+	}
 }
